@@ -1,0 +1,13 @@
+github:
+  enabled: false
+  repository: ""
+  branch: main
+  path: reports
+  token-env: PLUGNOSTICS_GITHUB_TOKEN
+collection:
+  max-bytes-per-cycle: 1048576
+reports:
+  interval-minutes: 30
+privacy:
+  redact-player-ips: true
+  redact-uuids: true
