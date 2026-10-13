@@ -16,6 +16,46 @@ import java.util.logging.*;
 
 public final class PlugnosticsHub extends JavaPlugin {
     private volatile boolean running;
+    private volatile String activeToken = "";
+    private Path tokenPath() throws IOException {
+        Path root = getDataFolder().toPath().toAbsolutePath().normalize();
+        Path path = root.resolve(getConfig().getString("github.token-file", "github-token.txt")).normalize();
+        if (!path.startsWith(root) || path.equals(root) || Files.isSymbolicLink(path))
+            throw new IOException("Caminho do token invalido");
+        return path;
+    }
+    private void prepareTokenFile() {
+        try {
+            Path path = tokenPath();
+            Files.createDirectories(path.getParent());
+            if (!Files.exists(path)) {
+                Files.createFile(path);
+                try { Files.setPosixFilePermissions(path, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------")); }
+                catch (UnsupportedOperationException ignored) {}
+                getLogger().info("Preencha github-token.txt com o token GitHub (uma linha).");
+            }
+            readToken();
+        } catch (IOException ex) { getLogger().warning("Nao foi possivel preparar o arquivo de token."); }
+    }
+    private String readToken() {
+        String token = "";
+        try {
+            Path path = tokenPath();
+            if (Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+                if (Files.size(path) > 4096) throw new IOException("Arquivo muito grande");
+                token = Files.readString(path, StandardCharsets.UTF_8).strip();
+            }
+            if (token.isBlank()) {
+                String env = System.getenv(getConfig().getString("github.token-env", "PLUGNOSTICS_GITHUB_TOKEN"));
+                token = env == null ? "" : env.strip();
+            }
+            if (token.chars().anyMatch(Character::isWhitespace)) token = "";
+        } catch (IOException | IllegalArgumentException ex) {
+            getLogger().warning("Falha ao ler credencial GitHub; confira github.token-file.");
+        }
+        activeToken = token;
+        return token;
+    }
     private long cursor;
     private final List<String> pending = new ArrayList<>();
     private final Object lock = new Object();
@@ -29,17 +69,19 @@ public final class PlugnosticsHub extends JavaPlugin {
 
     @Override public void onEnable() {
         saveDefaultConfig();
+        prepareTokenFile();
         running = true;
         logPath = Paths.get("logs", "latest.log");
         try { if (Files.exists(logPath)) cursor = Files.size(logPath); } catch(IOException ignored) {}
         int minutes = Math.max(5, getConfig().getInt("reports.interval-minutes", 30));
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, this::collectAndReport, 20L*60, minutes*60L*20);
-        getLogger().info("Plugnostics-Hub 0.1.0 ativo; GitHub: " + getConfig().getBoolean("github.enabled", false));
+        getLogger().info("Plugnostics-Hub 0.1.1 ativo; GitHub: " + getConfig().getBoolean("github.enabled", false));
     }
     @Override public void onDisable() { running = false; }
     private void collectAndReport() {
         if (!running) return;
         try {
+            readToken();
             readIncrement();
             List<String> lines;
             synchronized(lock) { lines = new ArrayList<>(pending); pending.clear(); }
@@ -78,6 +120,8 @@ public final class PlugnosticsHub extends JavaPlugin {
     }
     private String sanitize(String line) {
         line = ANSI.matcher(line).replaceAll("");
+        if (!activeToken.isBlank()) line = line.replace(activeToken, "[REDACTED]");
+        line = line.replaceAll("(?:github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+)", "[REDACTED]");
         line = SECRET.matcher(line).replaceAll("$1[REDACTED]");
         if (getConfig().getBoolean("privacy.redact-player-ips", true)) line = IPV4.matcher(line).replaceAll("[IP]");
         if (getConfig().getBoolean("privacy.redact-uuids", true)) line = UUID.matcher(line).replaceAll("[UUID]");
@@ -119,10 +163,9 @@ public final class PlugnosticsHub extends JavaPlugin {
         String repo = getConfig().getString("github.repository", "");
         String branch = getConfig().getString("github.branch", "main");
         String prefix = getConfig().getString("github.path", "reports").replaceAll("^/+|/+$", "");
-        String env = getConfig().getString("github.token-env", "PLUGNOSTICS_GITHUB_TOKEN");
-        String token = System.getenv(env);
+        String token = readToken();
         if (!repo.matches("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+") || token == null || token.isBlank()) {
-            getLogger().warning("GitHub nao configurado: repository ou variavel de ambiente do token ausente.");return false;
+            getLogger().warning("GitHub nao configurado: repository ou token ausente; preencha github-token.txt ou a variavel de ambiente.");return false;
         }
         try {
             String path = prefix.isEmpty()? name : prefix + "/" + name;
@@ -133,7 +176,7 @@ public final class PlugnosticsHub extends JavaPlugin {
                 .header("Accept","application/vnd.github+json").header("X-GitHub-Api-Version","2022-11-28")
                 .PUT(HttpRequest.BodyPublishers.ofString(body)).build();
             HttpResponse<String> res = http.send(req,HttpResponse.BodyHandlers.ofString());
-            if (res.statusCode()==201) return true;
+            if (res.statusCode()==201) { getLogger().info("GitHub: autenticacao e envio confirmados."); return true; }
             getLogger().warning("GitHub HTTP " + res.statusCode());return false;
         } catch(Exception ex) {getLogger().warning("GitHub: "+ex.getClass().getSimpleName());return false;}
     }

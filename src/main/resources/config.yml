@@ -3,6 +3,8 @@ github:
   repository: ""
   branch: main
   path: reports
+  # Relative to the plugin folder; file is created empty on startup.
+  token-file: github-token.txt
   token-env: PLUGNOSTICS_GITHUB_TOKEN
 collection:
   max-bytes-per-cycle: 1048576

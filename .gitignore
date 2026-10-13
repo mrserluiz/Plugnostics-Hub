@@ -6,3 +6,5 @@ target/
 reports/
 .env
 .idea/
+github-token.txt
+**/github-token.txt
