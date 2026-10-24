@@ -1,30 +1,36 @@
-# Plugnostics-Hub 0.1.1 — experimental MVP
+# Plugnostics-Hub 0.2.0 — logs locais
 
-Independent Paper plugin for local diagnostics and optional upload to an **administrator-selected** GitHub repository. No centralized report repository is used. The GitHub source repository must contain only project source, never server logs.
+Plugin Paper / Java 21. Esta versão funciona sem token, sem painel web e sem enviar logs para serviços externos. Mesmo configurações antigas com `github.enabled: true` são desativadas na inicialização. Arquivos de relatórios e credenciais antigos são preservados, mas não são usados.
 
-## Install
+## Instalação
 
-1. Place `Plugnostics-Hub-0.1.1.jar` in `plugins/`, then restart Paper.
-2. Local reports are written to `plugins/PlugnosticsHub/reports/` every 30 minutes (first report after ~1 minute).
-3. To enable GitHub upload, create your own **private** report repository, set `github.enabled: true` and `github.repository: "OWNER/REPO"` in config.yml, and paste your token as a single line into `plugins/PlugnosticsHub/github-token.txt`, created empty at startup. Use the hosting file manager or SFTP. The file takes priority; `PLUGNOSTICS_GITHUB_TOKEN` remains an environment-variable fallback. Existing configurations also use this default filename without migration. Token requires Contents: Read and write permission **only** on that report repository. Never put tokens in config.yml or reports.
-4. Restart Paper. GitHub upload uses HTTPS GitHub Contents API. Initialize your report repository with a README so the configured branch exists. Successful upload confirms authentication in the console. HTTP 401 indicates invalid credentials; 403 can indicate insufficient permissions or rate limits; 404 can indicate an inaccessible repository/branch.
+1. Pare o servidor e substitua o JAR antigo por `Plugnostics-Hub-0.2.0.jar` (mantenha somente uma versão).
+2. Mantenha a pasta de configurações existente; as novas opções usam valores padrão sem exigir apagar o config.yml.
+3. Inicie o servidor. Os logs são atualizados aproximadamente a cada segundo em `plugins/PlugnosticsHub/logs/`.
 
-## Scope and limitations
+| Arquivo | Conteúdo |
+| --- | --- |
+| `plugins/NomeDoPlugin.log` | Registros cujo prefixo/logger identifica o plugin, incluindo continuação de stack traces |
+| `users.log` | Todos os jogadores juntos: tentativas e resultado de login, entrada, saída, chat e nomes dos comandos |
+| `errors/paper-errors.log` | ERROR/SEVERE/FATAL do servidor ou sem plugin identificável, com continuação dos stack traces |
+| `errors/plugins-errors.log` | ERROR/SEVERE/FATAL atribuídos a plugins; também permanecem no log do próprio plugin |
+| `server.log` | Console sem atribuição a plugin, incluindo avisos e mensagens gerais |
+| `cursor.properties` | Posição de leitura interna; não editar enquanto o servidor estiver ligado |
 
-- Initial implementation reads newly appended lines from `logs/latest.log` (starting from plugin enable), groups lines by exact `[PluginName]` tags, and records a plugin inventory. Untagged lines go to `Unknown`.
-- Heuristic error/warning classification; not a root-cause analyzer. Not all plugin logs contain recognizable tags. No TPS/MSPT collection, crash recovery, command access, web UI or player-name anonymization yet.
-- Local JSON reports include log content. Automated token/password/IP/UUID redaction is **best effort, not a guarantee**. Review reports before enabling remote upload; prefer private repositories.
-- Report files are retained locally; no automatic cleanup in this MVP. Each GitHub upload creates a timestamped file and commit; long-term batching/retention remain future work.
-- GitHub Actions builds against the real Paper API. Runtime compatibility has not been verified on a live Paper server. Test on a staging server first.
+Os arquivos são criados quando recebem registros. Um arquivo por plugin, sem separar por jogador. O arquivo ativo é `.log`; por padrão, ao atingir aproximadamente 10 MB, passa a `.log.1`, até cinco arquivos históricos por categoria. O tamanho pode ultrapassar o limite pelo tamanho de um lote. A leitura de `latest.log` tem limite de 1 MB por ciclo e recupera o atraso nos próximos ciclos, sem descartar o início do log por excesso de volume.
 
-## Build from source
+## Jogadores
 
-Use Java 21+ and Paper API for your server version as `compileOnly`; compile `src/main/java`, package class files together with `src/main/resources`. Do **not** include the API stubs in the distributed JAR.
+O `users.log` usa eventos Paper/Bukkit a partir da ativação do plugin. `LOGIN_ATTEMPT`/`LOGIN_RESULT` não são garantia de entrada: `JOIN` confirma a entrada. Chat cancelado recebe `CHAT_CANCELLED`. Não captura mensagens privadas internas de outros plugins nem conversas enviadas antes da ativação. Nomes e textos são preservados; IPs IPv4 e UUIDs são ocultados por padrão. Argumentos de todos os comandos são omitidos para evitar registrar senhas de `/login` e `/register`. Não há registro de movimentação, inventários ou blocos.
 
-## Logs and code are separate
+## Limitações de atribuição
 
-The official repository contains source and builds only. Each administrator configures their own report repository.
+Os logs dos plugins são extraídos do `logs/latest.log` do Paper. Plugins que escrevem apenas em arquivos próprios não são coletados. Registros com tag desconhecida permanecem em `server.log`. Um erro em `paper-errors.log` pode ter origem em plugin sem identificação: a classificação não comprova a causa. Não há interceptação de stderr externo à JVM nem recuperação de um crash antes de o sistema gravar seu log.
 
-## Credential privacy
+A primeira ativação importa o `latest.log` existente; o cursor evita repetir linhas após recarregar o plugin no mesmo arquivo e reinicia quando o arquivo é substituído ou truncado. Queda abrupta durante a gravação pode repetir o último lote. Eventos de usuários têm fila limitada a 10.000 registros; descarte por sobrecarga é contabilizado no arquivo. Uma falha de disco não tem garantia de recuperação dos eventos em memória. Desligamento normal aguarda até cinco segundos para gravar a fila.
 
-The token file is never included in reports. Its current value and recognizable GitHub token patterns are redacted from captured logs. Never upload the credential file to GitHub. Redaction of other data remains best effort.
+Ocultação de tokens e senhas é baseada em padrões e não garante remover todos os dados sensíveis. A ocultação de IPs cobre IPv4, não todos os formatos IPv6. Revise os arquivos antes de compartilhá-los. Os logs originais do Paper continuam intactos.
+
+## Compilação e validação
+
+`mvn -B -ntp clean package` com Java 21. Testes verificam separação de plugins/erros, continuação de stack trace, UTF-8 dividido entre leituras, cursor após reinício, truncamento e rotação. Ainda requer teste real no servidor Paper.

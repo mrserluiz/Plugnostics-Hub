@@ -1,15 +1,13 @@
+# Local-only build. Existing github.enabled is forced to false on startup.
 github:
   enabled: false
-  repository: ""
-  branch: main
-  path: reports
-  # Relative to the plugin folder; file is created empty on startup.
-  token-file: github-token.txt
-  token-env: PLUGNOSTICS_GITHUB_TOKEN
-collection:
-  max-bytes-per-cycle: 1048576
-reports:
-  interval-minutes: 30
+local:
+  max-file-mb: 10
+  archives: 5
+players:
+  chat: true
+  # Command names only; arguments are always omitted.
+  commands: true
 privacy:
   redact-player-ips: true
   redact-uuids: true

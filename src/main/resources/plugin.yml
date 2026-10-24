@@ -1,7 +1,8 @@
 name: PlugnosticsHub
-version: 0.1.1
+version: 0.2.0
 main: dev.plugnostics.PlugnosticsHub
 api-version: '1.21'
 author: Plugnostics-Hub
 website: https://github.com/mrserluiz/Plugnostics-Hub
-description: Local Minecraft diagnostics and opt-in GitHub reports
+description: Local per-plugin, player and Paper error logs
+
