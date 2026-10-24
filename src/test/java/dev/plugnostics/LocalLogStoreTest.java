@@ -18,6 +18,8 @@ class LocalLogStoreTest {
         assertEquals(Set.of("plugins/BetterModel.log", "errors/plugins-errors.log"),
             r.route("[12:00:00] [Server thread/ERROR]: [BetterModel] Failed"));
         assertEquals(Set.of("plugins/BetterModel.log", "errors/plugins-errors.log"), r.route("  at foo.Bar.run(Bar.java:1)"));
+        assertEquals(Set.of("plugins/BetterModel.log", "errors/plugins-errors.log"),
+            r.route("[12:00:00] [Server thread/ERROR]: \tat foo.Bar.run(Bar.java:1)"));
         assertEquals(Set.of("server.log", "errors/paper-errors.log"),
             r.route("[12:00:01] [Server thread/ERROR]: Watchdog timeout"));
         assertEquals(Set.of("server.log"), r.route("[12:00:02] [Server thread/INFO]: Recovered"));

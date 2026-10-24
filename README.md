@@ -1,10 +1,10 @@
-# Plugnostics-Hub 0.2.0 — logs locais
+# Plugnostics-Hub 0.2.1 — logs locais
 
 Plugin Paper / Java 21. Esta versão funciona sem token, sem painel web e sem enviar logs para serviços externos. Mesmo configurações antigas com `github.enabled: true` são desativadas na inicialização. Arquivos de relatórios e credenciais antigos são preservados, mas não são usados.
 
 ## Instalação
 
-1. Pare o servidor e substitua o JAR antigo por `Plugnostics-Hub-0.2.0.jar` (mantenha somente uma versão).
+1. Pare o servidor e substitua o JAR antigo por `Plugnostics-Hub-0.2.1.jar` (mantenha somente uma versão).
 2. Mantenha a pasta de configurações existente; as novas opções usam valores padrão sem exigir apagar o config.yml.
 3. Inicie o servidor. Os logs são atualizados aproximadamente a cada segundo em `plugins/PlugnosticsHub/logs/`.
 

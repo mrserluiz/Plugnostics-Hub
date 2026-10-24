@@ -21,9 +21,12 @@ final class LogRouter {
     Set<String> route(String line) {
         Matcher header = HEADER.matcher(line);
         if (header.matches()) {
-            owner = null;
-            error = ERROR.matcher(header.group(1)).find();
-            Matcher tag = TAG.matcher(header.group(2));
+            String message = header.group(2);
+            boolean nextError = ERROR.matcher(header.group(1)).find();
+            boolean continuation = error && nextError && message.matches("(?:\\s+at\\s+.*|\\s*(?:Caused by:|Suppressed:|\\.\\.\\. \\d+ more).*|[a-zA-Z_$][\\w.$]*(?:Exception|Error)(?::.*)?)");
+            if (!continuation) owner = null;
+            error = nextError;
+            Matcher tag = TAG.matcher(message);
             if (tag.find()) owner = names.get(tag.group(1).toLowerCase(Locale.ROOT));
             // Attribution by the actual emitting logger when the console includes it.
             if (owner == null) {
