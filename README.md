@@ -1,10 +1,10 @@
-# Plugnostics-Hub 0.2.1 — logs locais
+# Plugnostics-Hub 0.2.2 — logs locais
 
-Plugin Paper / Java 21. Esta versão funciona sem token, sem painel web e sem enviar logs para serviços externos. Mesmo configurações antigas com `github.enabled: true` são desativadas na inicialização. Arquivos de relatórios e credenciais antigos são preservados, mas não são usados.
+Plugin Paper 26.3 / Java 25. Esta versão funciona sem token, sem painel web e sem enviar logs para serviços externos. Mesmo configurações antigas com `github.enabled: true` são desativadas na inicialização. Arquivos de relatórios e credenciais antigos são preservados, mas não são usados.
 
 ## Instalação
 
-1. Pare o servidor e substitua o JAR antigo por `Plugnostics-Hub-0.2.1.jar` (mantenha somente uma versão).
+1. Pare o servidor e substitua o JAR antigo por `Plugnostics-Hub-0.2.2.jar` (mantenha somente uma versão).
 2. Mantenha a pasta de configurações existente; as novas opções usam valores padrão sem exigir apagar o config.yml.
 3. Inicie o servidor. Os logs são atualizados aproximadamente a cada segundo em `plugins/PlugnosticsHub/logs/`.
 
@@ -33,4 +33,8 @@ Ocultação de tokens e senhas é baseada em padrões e não garante remover tod
 
 ## Compilação e validação
 
-`mvn -B -ntp clean package` com Java 21. Testes verificam separação de plugins/erros, continuação de stack trace, UTF-8 dividido entre leituras, cursor após reinício, truncamento e rotação. Ainda requer teste real no servidor Paper.
+`mvn -B -ntp clean package` com Java 25. Testes verificam separação de plugins/erros, continuação de stack trace, UTF-8 dividido entre leituras, cursor após reinício, truncamento e rotação. Ainda requer teste real no servidor Paper.
+
+## Atualização 0.2.2 — Paper 26.3
+
+Compilação e testes com Java 25 e API Paper 26.3; `api-version: '26.3'`. A faixa Maven é limitada à série 26.3. Mantenha a pasta existente de logs e configurações ao substituir o JAR. Validação em servidor real continua pendente.

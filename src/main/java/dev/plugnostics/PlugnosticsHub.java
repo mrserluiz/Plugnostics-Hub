@@ -59,7 +59,7 @@ public final class PlugnosticsHub extends JavaPlugin implements Listener {
             Thread thread = new Thread(r, "Plugnostics-local-logs"); thread.setDaemon(true); return thread;
         });
         worker.scheduleWithFixedDelay(this::drain, 0, 1, TimeUnit.SECONDS);
-        getLogger().info("Plugnostics-Hub 0.2.1: logs locais ativos; envio externo desativado.");
+        getLogger().info("Plugnostics-Hub 0.2.2: logs locais ativos; envio externo desativado.");
     }
 
     private void drain() {

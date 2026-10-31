@@ -1,7 +1,7 @@
 name: PlugnosticsHub
-version: 0.2.1
+version: 0.2.2
 main: dev.plugnostics.PlugnosticsHub
-api-version: '1.21'
+api-version: '26.3'
 author: Plugnostics-Hub
 website: https://github.com/mrserluiz/Plugnostics-Hub
 description: Local per-plugin, player and Paper error logs

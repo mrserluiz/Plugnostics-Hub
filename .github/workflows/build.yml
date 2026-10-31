@@ -13,18 +13,18 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
           cache: maven
       - name: Compile plugin
         run: mvn -B -ntp clean package
       - uses: actions/upload-artifact@v4
         with:
-          name: Plugnostics-Hub-0.2.1
-          path: target/Plugnostics-Hub-0.2.1.jar
+          name: Plugnostics-Hub-0.2.2
+          path: target/Plugnostics-Hub-0.2.2.jar
       - name: Publish experimental release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v0.2.1 >/dev/null 2>&1 || gh release create v0.2.1 --title "Plugnostics-Hub 0.2.1 (Experimental)" --notes "Local logging: per-plugin files, unified player activity, separate server errors. No uploads or credentials required. Experimental; test on staging Paper." --prerelease
-          gh release upload v0.2.1 target/Plugnostics-Hub-0.2.1.jar --clobber
+          gh release view v0.2.2 >/dev/null 2>&1 || gh release create v0.2.2 --title "Plugnostics-Hub 0.2.2 (Experimental)" --notes "Paper 26.3 / Java 25. Local logging: per-plugin files, unified player activity, separate server errors. No uploads or credentials required. Experimental; test on staging Paper." --prerelease
+          gh release upload v0.2.2 target/Plugnostics-Hub-0.2.2.jar --clobber
 
